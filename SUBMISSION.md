@@ -23,7 +23,7 @@ Quy tắc đặt tên:
 
 - Họ tên viết liền, không dấu và không có khoảng trắng.
 - Các phần được ngăn cách bằng dấu `-`.
-- Mã ngày phải viết hoa đúng dạng `DAYxx`; bài này dùng `DAY12`, không dùng
+- Mã ngày phải viết hoa đúng dạng `DAYxx`; bài nà y dùng `DAY12`, không dùng
   `Day12` hoặc `DAY-12`.
 - Ghi đúng MSSV được cấp; không dùng nickname hoặc tài khoản GitHub thay MSSV.
 
