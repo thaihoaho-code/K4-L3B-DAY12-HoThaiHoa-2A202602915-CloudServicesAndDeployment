@@ -49,7 +49,7 @@ jobs:
     needs: [test, build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
-    environment: production
+    environment: "satisfied-communication / production"
     timeout-minutes: 20
 
     env:
