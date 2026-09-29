@@ -1,63 +1,67 @@
-name: CI/CD Pipeline
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    env:
-      AGENT_API_KEY: ci-dummy
-      REDIS_URL: "fake://"
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run Pytest
-        run: |
-          pytest tests/ --ignore=tests/test_cp5.py --ignore=tests/test_bonus_cicd.py -v
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build Docker Image
-        run: |
-          docker build -t day12-agent:ci .
-
   deploy:
     needs: [test, build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE_NAME }}
+      PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Railway
+      - name: Install Railway CLI
         run: |
           npm i -g @railway/cli
-          railway up --detach --service "${{ vars.RAILWAY_SERVICE_NAME }}"
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          railway --version
+
+      - name: Check configuration
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+
+          service = os.getenv("RAILWAY_SERVICE", "")
+          print(f"Service value: {service!r}", flush=True)
+          print(f"Service length: {len(service)}", flush=True)
+
+          errors = []
+          for key in ("RAILWAY_TOKEN", "RAILWAY_SERVICE", "PUBLIC_URL"):
+              if not os.getenv(key, "").strip():
+                  errors.append(f"Missing or empty: {key}")
+
+          if service != service.strip():
+              errors.append("Service contains leading/trailing whitespace")
+
+          if errors:
+              for error in errors:
+                  print(f"::error::{error}", flush=True)
+              sys.exit(1)
+          PY
+
+      - name: Inspect Railway context
+        run: railway status --json
+
+      - name: Deploy to Railway
+        run: railway up --ci --service "$RAILWAY_SERVICE"
 
       - name: Smoke test
+        shell: bash
         run: |
-          echo "Đợi 45 giây để server khởi động..."
-          sleep 45
-          curl -fsS "${{ vars.PUBLIC_URL }}/health"
+          for attempt in $(seq 1 18); do
+            echo "Health check $attempt/18"
+            if curl --fail --silent --show-error \
+              --connect-timeout 5 \
+              --max-time 10 \
+              "${PUBLIC_URL%/}/health"; then
+              echo
+              echo "API is healthy"
+              exit 0
+            fi
+            sleep 10
+          done
+
+          echo "::error::API health check failed"
+          exit 1
