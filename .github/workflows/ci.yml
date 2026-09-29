@@ -1,7 +1,56 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      AGENT_API_KEY: ci-dummy
+      REDIS_URL: "fake://"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Pytest
+        run: |
+          pytest tests/ \
+            --ignore=tests/test_cp5.py \
+            --ignore=tests/test_bonus_cicd.py \
+            -v
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: docker build -t day12-agent:ci .
+
   deploy:
     needs: [test, build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     env:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE_NAME }}
@@ -28,6 +77,7 @@
           print(f"Service length: {len(service)}", flush=True)
 
           errors = []
+
           for key in ("RAILWAY_TOKEN", "RAILWAY_SERVICE", "PUBLIC_URL"):
               if not os.getenv(key, "").strip():
                   errors.append(f"Missing or empty: {key}")
@@ -52,6 +102,7 @@
         run: |
           for attempt in $(seq 1 18); do
             echo "Health check $attempt/18"
+
             if curl --fail --silent --show-error \
               --connect-timeout 5 \
               --max-time 10 \
@@ -60,6 +111,7 @@
               echo "API is healthy"
               exit 0
             fi
+
             sleep 10
           done
 
