@@ -136,7 +136,6 @@ def ask(
          tokens_in=result["tokens_in"], tokens_out=result["tokens_out"],
          cost_usd=result["cost_usd"])``
       8. trả về::
-
             {
                 "answer": result["answer"],
                 "user_id": user_id,
