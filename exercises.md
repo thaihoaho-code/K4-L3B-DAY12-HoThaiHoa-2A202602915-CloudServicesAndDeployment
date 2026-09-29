@@ -1,11 +1,5 @@
 # Phiếu Phản Ánh — K4 Level 3B, Ngày 12
 
-> **Bài làm cá nhân.** Trả lời bằng lời của chính bạn, dựa trên những gì bạn
-> quan sát được khi chạy code — không sao chép đáp án của người khác.
->
-> Cách trả lời: thay dòng `> *Câu trả lời của bạn*` bằng câu trả lời.
-> `grade.py` đếm số câu đã trả lời (15 điểm cho 10 câu).
->
 > Họ và tên: Hồ Thái Hòa  Mã học viên: 2A202602915
 
 ---

@@ -52,7 +52,7 @@ jobs:
       - name: Deploy to Railway
         run: |
           npm i -g @railway/cli
-          railway up --detach
+          railway up --detach --service "${{ vars.RAILWAY_SERVICE_NAME }}"
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
