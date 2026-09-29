@@ -56,7 +56,8 @@ class Lifecycle:
 
         SIGTERM: orchestrator yêu cầu tắt. SIGINT: bạn bấm Ctrl+C.
         """
-        raise NotImplementedError("TODO (CP4): cài đặt install")
+        pass
+        # raise NotImplementedError("TODO (CP4): cài đặt install")
 
 
 # Một instance dùng chung cho cả app
